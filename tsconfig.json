@@ -1,0 +1,21 @@
+// SPDX-License-Identifier: MIT
+{
+  "compilerOptions": {
+    "module": "es2020",
+    "target": "es2021",
+    "moduleResolution": "node",
+    "lib": ["DOM", "ES2021"],
+    "strict": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "types": []
+  },
+  "include": ["src/**/*.ts"]
+}
