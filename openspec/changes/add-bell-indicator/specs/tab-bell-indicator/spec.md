@@ -62,16 +62,20 @@ A top-level tab SHALL show the bell icon while any pane inside it, at any nestin
 - **WHEN** a pane with an unseen bell is moved out of its tab into another tab
 - **THEN** the icon is shown on the tab that now contains the pane and is removed from the old tab if no other pane there has an unseen bell
 
-### Requirement: Focusing a tab clears its bells
-When a tab is focused while it is the active tab and the Tabby window has focus, the plugin SHALL clear the unseen bell of every pane in that tab, including panes that do not have keyboard focus or are hidden behind a maximized pane. Focus includes selecting the tab and the Tabby window regaining focus while the tab is active. A focus event on a pane whose tab is not active, or while the window is unfocused, SHALL NOT clear its bell.
+### Requirement: Opening a tab clears its bells
+When the user makes a ringing tab the active tab while the Tabby window has focus, the plugin SHALL clear the unseen bell of every pane in that tab, including panes without keyboard focus or hidden behind a maximized pane. A focus event that does not change the active tab SHALL NOT clear a bell at once, and a focus event on a pane whose tab is not active, or while the window is unfocused, SHALL NOT clear it.
 
 #### Scenario: Selecting a ringing background tab
 - **WHEN** the user selects a tab whose header shows the bell icon
 - **THEN** all panes in that tab are cleared and the icon disappears
 
-#### Scenario: Returning to the Tabby window
-- **WHEN** the active tab got a bell while the Tabby window was unfocused, and the window regains focus
-- **THEN** the bell is cleared and the icon disappears
+#### Scenario: Ringing pane moved into a background tab
+- **WHEN** a pane with an unseen bell is moved from the active tab into a background tab, and the user then selects that tab
+- **THEN** the pane is cleared and the icon disappears
+
+#### Scenario: Clicking the tab that is already active
+- **WHEN** a pane hidden behind a maximized pane of the active split tab has an unseen bell, and the user clicks that tab's header
+- **THEN** the icon stays, because the active tab did not change
 
 #### Scenario: Sibling pane closes in a background tab
 - **WHEN** a pane in a background split tab has an unseen bell, and another pane of that tab closes so that Tabby moves focus to the ringing pane
@@ -94,26 +98,50 @@ When a pane on screen rings the bell, the plugin SHALL show the icon and clear i
 
 #### Scenario: User switches away before 2 seconds
 - **WHEN** a pane in the active tab rings the bell and the user selects another tab within 2 seconds
-- **THEN** the icon stays on the first tab until that tab is focused again
+- **THEN** the icon stays on the first tab until that tab is opened again
 
 #### Scenario: Pane hidden behind a maximized pane
 - **WHEN** another pane of the active split tab is maximized and a hidden pane rings the bell
-- **THEN** the icon stays after 2 seconds, and is cleared when the tab is opened again or the window regains focus
+- **THEN** the icon stays after 2 seconds, and is cleared when the tab is opened again
+
+#### Scenario: Moving focus to a hidden pane
+- **WHEN** a pane hidden behind a maximized pane of the active split tab has an unseen bell, and the user moves focus to that pane so that Tabby shows it
+- **THEN** the icon is removed 2 seconds later
 
 #### Scenario: Maximized pane rings
 - **WHEN** the maximized pane of the active split tab rings the bell
 - **THEN** the icon appears and is removed 2 seconds later
 
-### Requirement: Bells while the window is unfocused wait for focus
-When a pane rings the bell while the Tabby window is not focused, the plugin SHALL keep the bell until its tab is focused with the window focused, even if the tab is the active tab.
+### Requirement: Bells while the window is unfocused show until 2 seconds after focus returns
+While the Tabby window is not focused, the plugin SHALL keep every bell and stop any pending 2 seconds. When the window regains focus with a ringing tab active, including a tab that became active while the window was unfocused, the plugin SHALL keep showing the icon so the user can see which tab rang, and SHALL clear each ringing pane 2 seconds later if it is on screen then.
 
 #### Scenario: Bell in the active tab of a background window
 - **WHEN** the active tab rings the bell while the Tabby window is unfocused, and 2 seconds pass
 - **THEN** the icon is still shown
 
+#### Scenario: Returning to the Tabby window
+- **WHEN** the active tab got a bell while the Tabby window was unfocused, and the window regains focus
+- **THEN** the icon is still shown right after the window regains focus, and is removed 2 seconds later
+
 #### Scenario: Window loses focus during the 2 seconds
 - **WHEN** a pane in the active tab rings the bell while the window is focused, and the window loses focus before 2 seconds have passed
-- **THEN** the icon is still shown after the 2 seconds and is cleared when the window regains focus
+- **THEN** the icon is still shown after the 2 seconds, and is removed 2 seconds after the window regains focus
+
+#### Scenario: Returning before the 2 seconds end
+- **WHEN** a pane in the active tab rings the bell at 0 s while the window is focused, the window loses focus at 0.5 s and regains it at 1.9 s
+- **THEN** the icon is still shown at 3.8 s and is removed at 3.9 s
+
+#### Scenario: Tab becomes active while the window is unfocused
+- **WHEN** a background tab has an unseen bell, and Tabby makes it the active tab while the window is unfocused (for example because the active tab's shell exits), and the window then regains focus
+- **THEN** the icon is still shown right after the window regains focus, and is removed 2 seconds later
+
+#### Scenario: Switching away right after returning
+- **WHEN** the active tab got a bell while the Tabby window was unfocused, the window regains focus, and the user selects another tab within 2 seconds
+- **THEN** the icon stays on the first tab until that tab is opened again
+
+#### Scenario: Hidden pane on returning
+- **WHEN** a pane hidden behind a maximized pane of the active split tab got a bell while the Tabby window was unfocused, and the window regains focus
+- **THEN** the icon stays after 2 seconds, and is cleared when the tab is opened again
 
 ### Requirement: Independent of Tabby's bell setting
 The bell icon SHALL work with every value of Tabby's terminal bell setting (off, visual, audible). It SHALL NOT change Tabby's own bell behaviour: sound, visual bell, frame flash and activity line.

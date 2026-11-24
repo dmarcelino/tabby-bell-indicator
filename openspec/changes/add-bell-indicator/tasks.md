@@ -68,9 +68,23 @@
 ## 7. Review fixes
 
 - [x] 7.1 Clear a pane on `focused$` only when its tab is active and the window has focus, so focus events Tabby sends by itself (for example after another pane in a background split closes) don't clear an unseen bell. Verify: unit tests for focus on a background pane and focus while the window is unfocused.
-- [x] 7.2 Don't start or complete the 2 s auto-clear for a pane hidden behind another maximized pane of the active split. Opening the tab or refocusing the window still clears it. Verify: unit tests for a hidden pane, the maximized pane itself, and a pane hidden before its timer expires.
+- [x] 7.2 Don't start or complete the 2 s auto-clear for a pane hidden behind another maximized pane of the active split. Opening the tab or refocusing the window still clears it (refocusing changed in 8.1: it no longer clears a hidden pane). Verify: unit tests for a hidden pane, the maximized pane itself, and a pane hidden before its timer expires.
 - [x] 7.3 Re-sync the header icons when Tabby rebuilds the tab bar (leaving fullscreen), and don't warn while the tab bar is hidden. Verify: jsdom test of a fullscreen round-trip with a real `MutationObserver`.
 - [x] 7.4 Skip a header sync while a CDK drag placeholder is in the tab bar, even if `tabDragActive$` already reported the end of the drag. Verify: jsdom test with a placeholder present, then removed.
 - [x] 7.5 Run the header sync loop outside Angular's zone. Verify: `npm run build` passes, and the plugin still shows and clears icons in a running Tabby (7.7).
 - [x] 7.6 README: create `plugins/node_modules` before linking. `package.json`: remove `typings`, which pointed at a file the build doesn't emit. Verify: the macOS commands run, and `npm run build` doesn't emit `dist/index.d.ts`.
 - [x] 7.7 Run `npm run typecheck`, `npm test` and `npm run build`. Re-run the affected manual cases in a running Tabby: background split pane closing, maximized pane, fullscreen round-trip, plus a smoke test of cases 1 and 2. Verify: all checks pass, and `doc/TESTING.md` has the results.
+
+## 8. Clear 2 s after returning to the window
+
+- [x] 8.1 Add `activeTabChange$` to `TabTree` (from `AppService.activeTabChange$`) and the **must open** flag to `BellStateService` (design D3). On `focused$` while the tab is seen: clear at once if the flag is set; otherwise start the 2 s timer if the pane is on screen and has no pending timer. Verify: unit tests cover returning to the window (still shown just after, removed 2 s later), the window losing focus during the 2 s then returning, switching away within 2 s of returning, a hidden pane on returning, switching away and back (cleared at once), and opening a background tab (cleared at once).
+- [x] 8.2 Update the README's table of when the icon clears, and the comments in `src/bellState.ts`. Verify: the README table matches the spec.
+- [x] 8.3 Review fixes:
+  - a tab that Tabby makes active while the window is unfocused starts the 2 s on return instead of clearing at once;
+  - focusing a hidden pane starts the 2 s even though Tabby un-maximizes the split only after the focus event;
+  - losing window focus (DOM `blur`) stops pending timers, so returning always gives the full 2 s;
+  - opening a tab also clears a ringing pane moved into it from the active tab;
+  - README: a hidden pane also clears 2 s after it is shown and focused.
+
+  Verify: one unit test per fix, each failing with the old logic.
+- [x] 8.4 Run `npm run typecheck`, `npm test` and `npm run build`. Re-test in a running Tabby: returning to the window, the window losing focus during the 2 s, a hidden maximized pane on returning, plus a smoke test of cases 1 and 2. Verify: all checks pass, and `doc/TESTING.md` has the results.

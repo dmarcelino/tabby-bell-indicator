@@ -40,7 +40,7 @@ What Tabby (upstream `tabby-core` / `tabby-terminal`) already provides:
 - *Alternative:* scan `output$`/`binaryOutput$` for `0x07`. Rejected: it would count BEL used as an OSC terminator as a bell, and would duplicate xterm's parser.
 
 ### D2. One state service; per-pane state; tab state computed on read
-`BellStateService` keeps `Map<BaseTabComponent, PaneBell>` for panes with an unseen bell. It is a plain class: the module provides it through a factory, and passes it a `TabTree` built from `AppService` and `SplitTabComponent` (`src/tabTree.ts`). Tabby's packages can't be loaded outside Tabby (they need Electron and the JIT compiler), so the state, tree and renderer code imports only types from `tabby-*`, and unit tests pass in fakes. `PaneBell` holds a pending timer, if any. The service exposes:
+`BellStateService` keeps `Map<BaseTabComponent, PaneBell>` for panes with an unseen bell. It is a plain class: the module provides it through a factory, and passes it a `TabTree` built from `AppService` and `SplitTabComponent` (`src/tabTree.ts`). Tabby's packages can't be loaded outside Tabby (they need Electron and the JIT compiler), so the state, tree and renderer code imports only types from `tabby-*`, and unit tests pass in fakes. `PaneBell` holds a pending timer, if any, and whether the pane's tab still has to be opened (D3). The service exposes:
 - `ring(pane)` / `clear(pane)` / `forget(pane)`
 - `isRinging(topLevelTab): boolean`: for a `SplitTabComponent`, true if any `getAllTabs()` pane is ringing; otherwise, true if the tab itself is ringing.
 - `changed$: Observable<void>`, emitted whenever the set of ringing panes changes.
@@ -53,26 +53,40 @@ Two predicates:
 - **Tab seen:** the pane's top-level tab (`app.getParentTab(pane) ?? pane`) is `app.activeTab`, and the window is focused.
 - **On screen:** the tab is seen, and the split has no maximized pane, or the maximized pane is this pane (`SplitTabComponent.getMaximizedTab()`, exposed as `TabTree.maximizedPaneOf`).
 
+Each ringing pane also has a **must open** flag: the bell can only be cleared at once by opening its tab.
+- `ring(pane)` sets it when the pane's tab is not the active tab, and otherwise keeps the value it had.
+- When the active tab changes (`TabTree.activeTabChange$`, from `AppService.activeTabChange$`), every ringing pane is updated:
+  - a pane whose tab is not the new active tab gets the flag: it must be opened again;
+  - a pane in the new active tab gets it if the window has focus, because the focus event that follows is the user opening the tab. This also covers a ringing pane that was moved into that tab from the active one.
+  - a pane in the new active tab loses it if the window is unfocused: Tabby changed the tab without the user seeing it (for example after the active tab's shell exited), so returning to the window starts the 2 s.
+- Window focus never sets it.
+
 On `ring(pane)`:
 1. Mark the pane as ringing and cancel any pending timer.
 2. If the pane is on screen, start a 2000 ms timer. On expiry, clear the pane if it is still on screen. Otherwise it stays ringing.
 3. Otherwise, start no timer.
 
 Clearing on focus:
-- On the first `ring` of a pane, the service subscribes to `pane.focused$` until `pane.destroyed$`. On each emission it clears the pane **only if the tab is seen**.
+- On the first `ring` of a pane, the service subscribes to `pane.focused$` until `pane.destroyed$`. On each emission, if the tab is seen:
+  - **must open** set: clear the pane at once. The user opened the tab.
+  - **must open** not set: the tab was already active, so this is the window regaining focus, the active tab clicked again, or a pane focused. If the pane has no pending timer, start the 2000 ms timer, as for a bell in a visible tab. A pending timer is left alone, so repeated focus events (for example `focusFollowsMouse`) don't keep pushing it back.
+  - The timer starts even if the pane is hidden behind a maximized pane, because `SplitTabComponent.focus(pane)` emits `focused$` before it un-maximizes the split. On expiry, a pane that is still hidden stays ringing, and one that is now shown clears.
 - Because split tabs forward `focused$` to every pane, and `AppService` re-emits `focused$` on window focus, this one subscription covers "opening the tab clears every pane" (including panes hidden behind a maximized one) and "returning to the window".
-  - `selectTab` sets the active tab before it emits `focused$` (in `setImmediate`).
+  - `selectTab` emits `activeTabChange$` synchronously, before it emits `focused$` (in `setImmediate`), so the flag is set by the time the focus event arrives.
   - The window is focused by the time `windowFocused$` fires.
+  - Telling the two apart by the order of the window's own `focus` event and Tabby's `windowFocused$` (an IPC message from the main process) was rejected: that order is not guaranteed.
 - The "tab seen" check is needed. Tabby also emits `focused$` for panes the user isn't looking at:
   - `SplitTabComponent.removeTab()` → `focusAnyIn()` → `focus(pane)` when a sibling pane closes, even in a background tab;
   - `onAfterTabAdded()`;
   - `focusFollowsMouse` on mouse movement over an unfocused window.
 
   (Corrected after review: an earlier version of this design assumed these could not happen.)
-- The maximized check applies only to the timer, not to focus clearing. Opening a tab clears every pane, as decided. A bell in a hidden pane of the tab you are looking at stays until you open that tab again, refocus the window or focus the pane, so it isn't lost after 2 s unseen.
+- The maximized check applies only to the timer's expiry, not to opening a tab. Opening a tab clears every pane, as decided. A bell in a hidden pane of the tab you are looking at stays until you open that tab again, or show and focus that pane, so it isn't lost after 2 s unseen.
+- Returning to the window clears with a 2 s delay rather than at once, so the user can see which tab rang. (Changed after manual testing: clearing at once on return removed the icon before it could be seen.)
+- When the window loses focus (the DOM `blur` event on `window`, exposed as `WindowFocus.blurred$`), every pending timer is cancelled, so the 2 s start again on return instead of running on from before. The event is acted on only if `document.hasFocus()` is false, so a blur that leaves focus inside the document changes nothing.
 
 `setTimeout`/`clearTimeout` are used directly and tested with vitest fake timers. Window focus is read through a small `WindowFocus` abstraction whose default implementation is `document.hasFocus()`, which works on every OS, and which tests replace with a fake.
-- *Alternative:* a flag driven by `windowFocused$` plus a DOM `blur` listener. Rejected: Tabby has no public blur event, and `document.hasFocus()` answers the question at the moment it matters.
+- *Alternative:* a focus flag kept up to date by `windowFocused$` plus a DOM `blur` listener. Rejected: Tabby has no public blur event, and `document.hasFocus()` answers the question at the moment it matters. The DOM `blur` event is only used to stop pending timers; decisions still read `document.hasFocus()`.
 - *Alternative:* cancel the timer when the user switches away. Rejected: the spec keeps the bell until the tab is seen again, and checking on expiry covers that.
 
 ### D4. Rendering by syncing with the DOM, in `tabbyAdapter.ts` only

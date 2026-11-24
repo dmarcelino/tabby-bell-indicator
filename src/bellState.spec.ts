@@ -106,7 +106,7 @@ describe('BellStateService: clearing', () => {
         return { app, bells, visible, focusedPane, otherPane, background, bgPane1, bgPane2 }
     }
 
-    describe('focusing a tab clears its bells', () => {
+    describe('opening a tab clears its bells', () => {
         it('clears every pane when a ringing background tab is selected', () => {
             const { app, bells, background, bgPane1, bgPane2 } = setup()
             bells.ring(bgPane1)
@@ -121,16 +121,43 @@ describe('BellStateService: clearing', () => {
             expect(bells.isRinging(background)).toBe(false)
         })
 
-        it('clears when the Tabby window regains focus', () => {
-            const { bells, visible, focusedPane } = setup()
+        it('clears at once when the user switches away and back', () => {
+            const { app, bells, visible, focusedPane, background } = setup()
             windowFocus.focused = false
             bells.ring(focusedPane)
-
-            // Tabby re-emits focused$ on the active tab, which a split passes to every pane.
             windowFocus.focused = true
-            visible.focus()
+
+            app.selectTab(background)
+            app.selectTab(visible)
 
             expect(bells.isRinging(visible)).toBe(false)
+        })
+
+        it('clears at once a ringing pane moved into the tab that is opened', () => {
+            const { app, bells, visible, focusedPane, otherPane, background, bgPane1, bgPane2 } = setup()
+            visible.maximized = focusedPane
+            bells.ring(otherPane)
+
+            // The pane is dragged into the background split, which stays in the background.
+            visible.maximized = null
+            visible.root = [focusedPane]
+            background.root = [bgPane1, [bgPane2], otherPane]
+            expect(bells.isRinging(background)).toBe(true)
+
+            app.selectTab(background)
+
+            expect(bells.isPaneRinging(otherPane)).toBe(false)
+        })
+
+        it('does not clear a hidden pane when the active tab is clicked again', () => {
+            const { app, bells, visible, focusedPane, otherPane } = setup()
+            visible.maximized = focusedPane
+            bells.ring(otherPane)
+
+            app.selectTab(visible)
+            vi.advanceTimersByTime(10_000)
+
+            expect(bells.isPaneRinging(otherPane)).toBe(true)
         })
     })
 
@@ -183,7 +210,7 @@ describe('BellStateService: clearing', () => {
         })
     })
 
-    describe('bells while the window is unfocused wait for focus', () => {
+    describe('bells while the window is unfocused show until 2 seconds after focus returns', () => {
         it('keeps a bell in the active tab of an unfocused window', () => {
             const { bells, visible, focusedPane } = setup()
             windowFocus.focused = false
@@ -205,7 +232,119 @@ describe('BellStateService: clearing', () => {
 
             windowFocus.focused = true
             visible.focus()
+            vi.advanceTimersByTime(BELL_CLEAR_DELAY_MS - 1)
+            expect(bells.isRinging(visible)).toBe(true)
+
+            vi.advanceTimersByTime(1)
             expect(bells.isRinging(visible)).toBe(false)
+        })
+
+        it('shows the bell for 2 seconds after the window regains focus', () => {
+            const { bells, visible, focusedPane } = setup()
+            windowFocus.focused = false
+            bells.ring(focusedPane)
+            vi.advanceTimersByTime(10_000)
+
+            // Tabby re-emits focused$ on the active tab, which a split passes to every pane.
+            windowFocus.focused = true
+            visible.focus()
+            expect(bells.isRinging(visible)).toBe(true)
+
+            vi.advanceTimersByTime(BELL_CLEAR_DELAY_MS - 1)
+            expect(bells.isRinging(visible)).toBe(true)
+
+            vi.advanceTimersByTime(1)
+            expect(bells.isRinging(visible)).toBe(false)
+        })
+
+        it('does not push the 2 seconds back on repeated focus events', () => {
+            const { bells, visible, focusedPane } = setup()
+            windowFocus.focused = false
+            bells.ring(focusedPane)
+            windowFocus.focused = true
+            visible.focus()
+
+            vi.advanceTimersByTime(1500)
+            focusedPane.focus()
+            vi.advanceTimersByTime(500)
+
+            expect(bells.isRinging(visible)).toBe(false)
+        })
+
+        it('keeps the bell when the user switches away within 2 seconds of returning', () => {
+            const { app, bells, visible, focusedPane, background } = setup()
+            windowFocus.focused = false
+            bells.ring(focusedPane)
+            windowFocus.focused = true
+            visible.focus()
+
+            vi.advanceTimersByTime(1000)
+            app.selectTab(background)
+            vi.advanceTimersByTime(10_000)
+            expect(bells.isRinging(visible)).toBe(true)
+
+            app.selectTab(visible)
+            expect(bells.isRinging(visible)).toBe(false)
+        })
+
+        it('shows the bell for 2 seconds after returning before the first 2 seconds ended', () => {
+            const { bells, visible, focusedPane } = setup()
+            bells.ring(focusedPane)
+            vi.advanceTimersByTime(500)
+            windowFocus.blur()
+
+            vi.advanceTimersByTime(1400)
+            windowFocus.focused = true
+            visible.focus()
+
+            vi.advanceTimersByTime(BELL_CLEAR_DELAY_MS - 1)
+            expect(bells.isRinging(visible)).toBe(true)
+
+            vi.advanceTimersByTime(1)
+            expect(bells.isRinging(visible)).toBe(false)
+        })
+
+        it('keeps the timer when a blur event comes while the window still has focus', () => {
+            const { bells, visible, focusedPane } = setup()
+            bells.ring(focusedPane)
+
+            windowFocus.blurred$.next()
+            vi.advanceTimersByTime(BELL_CLEAR_DELAY_MS)
+
+            expect(bells.isRinging(visible)).toBe(false)
+        })
+
+        it('shows the bell for 2 seconds after returning when the tab became active while away', () => {
+            const { app, bells, background, bgPane1 } = setup()
+            bells.ring(bgPane1)
+            windowFocus.blur()
+
+            // E.g. the active tab's shell exits and Tabby selects the ringing tab.
+            app.selectTab(background)
+            expect(bells.isRinging(background)).toBe(true)
+
+            windowFocus.focused = true
+            background.focus()
+            expect(bells.isRinging(background)).toBe(true)
+
+            vi.advanceTimersByTime(BELL_CLEAR_DELAY_MS)
+            expect(bells.isRinging(background)).toBe(false)
+        })
+
+        it('keeps a hidden pane ringing after the window regains focus', () => {
+            const { app, bells, visible, focusedPane, otherPane, background } = setup()
+            visible.maximized = focusedPane
+            windowFocus.focused = false
+            bells.ring(otherPane)
+
+            windowFocus.focused = true
+            visible.focus()
+            vi.advanceTimersByTime(10_000)
+            expect(bells.isPaneRinging(otherPane)).toBe(true)
+
+            app.selectTab(background)
+            app.selectTab(visible)
+            expect(bells.isPaneRinging(otherPane)).toBe(false)
         })
 
         it('keeps a bell in a background tab', () => {
@@ -243,6 +382,8 @@ describe('BellStateService: clearing', () => {
 
             windowFocus.focused = true
             focusedPane.focus()
+            expect(bells.isRinging(visible)).toBe(true)
+            vi.advanceTimersByTime(BELL_CLEAR_DELAY_MS)
             expect(bells.isRinging(visible)).toBe(false)
         })
     })
@@ -288,6 +429,22 @@ describe('BellStateService: clearing', () => {
             vi.advanceTimersByTime(10_000)
 
             expect(bells.isPaneRinging(otherPane)).toBe(true)
+        })
+
+        it('clears a hidden pane 2 seconds after the user moves focus to it', () => {
+            const { bells, visible, focusedPane, otherPane } = setup()
+            visible.maximized = focusedPane
+            bells.ring(otherPane)
+
+            // Tabby emits focused$ on the pane before it un-maximizes the split.
+            visible.focusPane(otherPane)
+            expect(visible.maximized).toBeNull()
+
+            vi.advanceTimersByTime(BELL_CLEAR_DELAY_MS - 1)
+            expect(bells.isPaneRinging(otherPane)).toBe(true)
+
+            vi.advanceTimersByTime(1)
+            expect(bells.isPaneRinging(otherPane)).toBe(false)
         })
 
         it('clears a hidden pane when its tab is selected again', () => {

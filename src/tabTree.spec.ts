@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createTabTree } from './tabTree'
 import { FakeApp, FakeSplitTab, FakeTab } from './testing/fakes'
 
@@ -34,5 +34,17 @@ describe('createTabTree', () => {
         expect(tree.panesOf(plain)).toEqual([plain])
         expect(tree.topLevelOf(b)).toBe(split)
         expect(tree.topLevelOf(plain)).toBe(plain)
+    })
+
+    it('passes on the app\'s active tab changes', () => {
+        const app = new FakeApp([new FakeTab('a'), new FakeTab('b')])
+        const tree = createTabTree<FakeTab>(app, FakeSplitTab)
+        const changed = vi.fn()
+        tree.activeTabChange$.subscribe(changed)
+
+        app.selectTab(app.tabs[1])
+
+        expect(tree.activeTab()).toBe(app.tabs[1])
+        expect(changed).toHaveBeenCalledTimes(1)
     })
 })

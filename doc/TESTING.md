@@ -14,6 +14,10 @@ The test script (not the plugin) gets Tabby's services through `require('@angula
 
 Note: with no argument, `TerminalService.openTab()` opens the **default profile**, which may be an SSH profile. To get a local shell, pass a local profile explicitly.
 
+Two more pitfalls:
+- The Tabby window must be visible on screen. While it is covered or on another desktop, Chromium reports `document.visibilityState` as `hidden` and pauses animation frames. Terminal output, Angular's tab-bar animations and the plugin's frame-batched sync all stall, so no icon appears. `getCurrentWindow().show()` makes it visible again.
+- Reloading the window to load a new build reopens only the tabs in Tabby's recovery list (`localStorage.tabsRecovery`). Tabs from plugins that don't save a recovery token are lost. Check that list before reloading a Tabby that has tabs worth keeping.
+
 ## 2026-11-23: DOM spike (task 2.1)
 
 **Setup**
@@ -89,3 +93,26 @@ Tabby's bell setting was **off** for every case except 7.
 | Background tab rings in fullscreen (tab bar hidden, `tabsInFullscreen` off), then fullscreen is left | Pass: the tab bar is rebuilt and the icon shows straight away; cleared on opening the tab. No "not found" warning logged |
 
 The sync loop now runs outside Angular's zone (7.5), and icons are still added and removed in all the cases above.
+
+## 2026-11-24: Clear 2 s after returning to the window (task 8.4)
+
+**Setup:** Tabby 1.0.238 on macOS, reloaded to load the new build. `log.txt` shows the startup line and no plugin warnings. Local `/bin/bash` test tabs, driven over the debug port as before. The test tabs were closed afterwards, and the active tab was restored.
+
+**Window focus was simulated.** On macOS a script can't reliably take focus back from another app (`app.focus({ steal: true })` worked only some of the time). So the test simulates focus where the plugin and Tabby read it:
+- Losing focus: `document.hasFocus()` is replaced by a stub that returns false, and a DOM `blur` event is dispatched on `window`.
+- Returning: the stub returns true again, and `HostWindowService.windowFocused` is fired in Angular's zone, which is what Tabby's own handler does when the main process reports the window focused.
+
+Everything after that is real Tabby code: `AppService` re-emits `focused$` on the active tab, the split forwards it to its panes, and the plugin redraws the tab bar. The real OS path (`windowFocused$` firing after the window really regains focus, with `document.hasFocus()` already true) was tested with the earlier build in 6.3, cases 9 and 10. The real OS `blur` event, which now stops pending timers, was not.
+
+| Case | Result |
+|---|---|
+| Smoke: background tab rings, then is opened; visible tab rings | Pass: cleared at once on opening; visible tab cleared after about 2 s |
+| Active tab rings while the window is unfocused, then the window regains focus | Pass: shown after 3 s unfocused; still shown just after returning and 1.5 s later; cleared about 2.5 s after returning |
+| Window loses focus during the 2 s | Pass: stays while unfocused; still shown just after returning; cleared about 2.5 s after returning |
+| Window loses focus and returns before the first 2 s end (bell at 0, return at about 1.6 s) | Pass: still shown after the original 2 s; cleared about 2 s after returning |
+| Window regains focus, then another tab is selected within 2 s | Pass: the icon stays on the tab left behind; cleared at once when it is opened again |
+| Pane hidden behind the maximized (focused) pane rings while the window is unfocused, then the window regains focus | Pass: the split stays maximized and the icon stays after 3 s; cleared when the tab is opened again |
+| Focus moved to a hidden pane (`SplitTabComponent.focus`) | Pass: the split un-maximizes; the icon is still shown just after, and cleared about 2 s later |
+| Background tab rings, Tabby makes it active while the window is unfocused, then the window regains focus | Pass: kept while unfocused; still shown just after returning; cleared about 2.5 s after returning |
+
+Observation: when a split tab gets focus, Tabby re-focuses its last focused pane and un-maximizes the split if that pane isn't the maximized one. A first run maximized a pane that didn't have focus, so returning to the window un-maximized the split, and the now visible pane cleared after 2 s. That is correct behaviour; the test was changed to maximize the focused pane, as the maximize hotkey does.

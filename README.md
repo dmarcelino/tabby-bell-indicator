@@ -15,9 +15,12 @@ A [Tabby](https://github.com/Eugeny/tabby) plugin that shows a bell icon in a ta
 |---|---|
 | A tab you are not looking at | When you open that tab. This clears every pane in it, including panes that don't have keyboard focus. |
 | The tab you are looking at, with the Tabby window focused | 2 seconds after the last bell. Each new bell restarts the 2 seconds. |
-| Any tab while the Tabby window is in the background | When you return to the window with that tab open, or when you open it later. |
+| The open tab while the Tabby window is in the background | 2 seconds after you return to the window, so you can see which tab rang. |
+| Another tab while the Tabby window is in the background | When you open that tab. |
 
-If you switch away from a tab within the 2 seconds, or the window loses focus during them, the icon stays until you come back to the tab.
+If you switch away from a tab within the 2 seconds, the icon stays until you open that tab again. If the window loses focus during the 2 seconds, the icon clears 2 seconds after you return to the window.
+
+A pane hidden behind a maximized pane keeps its icon until you open the tab again, or until you show and focus that pane: the icon then clears 2 seconds later.
 
 There are no settings. To turn the feature off, disable the plugin in Tabby's settings (Settings, Plugins).
 

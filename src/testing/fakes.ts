@@ -50,10 +50,19 @@ export class FakeSplitTab extends FakeTab {
             pane.focus()
         }
     }
+
+    /** Like `SplitTabComponent.focus(pane)`: emits focused$ first, then un-maximizes another pane */
+    focusPane (pane: FakeTab): void {
+        pane.focus()
+        if (this.maximized !== pane) {
+            this.maximized = null
+        }
+    }
 }
 
 export class FakeApp {
     activeTab: FakeTab | null = null
+    readonly activeTabChange$ = new Subject<FakeTab | null>()
 
     constructor (public tabs: FakeTab[]) { }
 
@@ -61,18 +70,32 @@ export class FakeApp {
         return this.tabs.find(t => t instanceof FakeSplitTab && t.getAllTabs().includes(tab)) ?? null
     }
 
-    /** Selecting a tab focuses it (and, for a split, all its panes) */
+    /**
+     * Like `AppService.selectTab`: selecting another tab emits `activeTabChange$`
+     * before focusing it (and, for a split, all its panes). Selecting the tab
+     * that is already active only focuses it again.
+     */
     selectTab (tab: FakeTab): void {
-        this.activeTab = tab
+        if (this.activeTab !== tab) {
+            this.activeTab = tab
+            this.activeTabChange$.next(tab)
+        }
         tab.focus()
     }
 }
 
 export class FakeWindowFocus implements WindowFocus {
     focused = true
+    readonly blurred$ = new Subject<void>()
 
     hasFocus (): boolean {
         return this.focused
+    }
+
+    /** The window loses focus, as the DOM `blur` event reports it */
+    blur (): void {
+        this.focused = false
+        this.blurred$.next()
     }
 }
 
