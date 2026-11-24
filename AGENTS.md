@@ -28,6 +28,7 @@ Upstream: https://github.com/Eugeny/tabby. Its docs are thin, so read its source
 - If the repo uses OpenSpec, planned work goes through `openspec/changes/`. Tick off tasks in that change's `tasks.md` as you finish them.
 - Public repo: no secrets, tokens, hostnames, internal URLs or personal paths in code, fixtures, docs or commit messages. Machine-specific settings go in `.env.local`, which git ignores.
 - Don't bump the version or publish to npm unless asked.
+- Never claim more than is true.
 
 ## Done means
 `npm run typecheck`, `npm test` and `npm run build` pass, and the build shows no new warnings. New behaviour comes with unit tests; use fakes for Tabby services and external processes rather than a running Tabby.
