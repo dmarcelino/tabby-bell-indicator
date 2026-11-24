@@ -116,3 +116,13 @@ Everything after that is real Tabby code: `AppService` re-emits `focused$` on th
 | Background tab rings, Tabby makes it active while the window is unfocused, then the window regains focus | Pass: kept while unfocused; still shown just after returning; cleared about 2.5 s after returning |
 
 Observation: when a split tab gets focus, Tabby re-focuses its last focused pane and un-maximizes the split if that pane isn't the maximized one. A first run maximized a pane that didn't have focus, so returning to the window un-maximized the split, and the now visible pane cleared after 2 s. That is correct behaviour; the test was changed to maximize the focused pane, as the maximize hotkey does.
+
+## 2026-11-24: Rename to tabby-bell-indicator
+
+**Setup:** Tabby 1.0.238 on macOS, started fresh (it wasn't running). The plugin is linked into `plugins/node_modules` as `tabby-bell-indicator`, and the build is from `main` after the rename.
+
+| Check | Result |
+|---|---|
+| Plugin startup | Pass: `log.txt` contains `tabby-bell-indicator: plugin loaded`, and no plugin warnings |
+
+The bell icon itself was not re-tested. The rename changed only names, not behaviour.
