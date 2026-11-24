@@ -3,14 +3,14 @@
 ## 1. Plugin scaffold
 
 - [x] 1.1 Create `package.json` following design D5:
-  - name `tabby-bell-notification`, `tabby-plugin` keyword, `author`, `license` (MIT), `main: dist/index.js`;
+  - name `tabby-bell-indicator`, `tabby-plugin` keyword, `author`, `license` (MIT), `main: dist/index.js`;
   - scripts `build`, `watch`, `test`, `typecheck`;
   - Angular 15, RxJS 7, `tabby-core` and `tabby-terminal` as peer and dev dependencies only.
 
   Verify: `npm install` succeeds and commit the resulting lockfile so that `npm ci` succeeds.
 - [x] 1.2 Add `tsconfig.json`, `webpack.config.mjs` (`externals` for `@angular/*`, `@ng-bootstrap/*`, `rxjs`, `tabby-*` and Node built-ins) and a vitest config (`src/**/*.spec.ts`). Verify: `npm run typecheck` and `npm run build` pass on a stub `src/index.ts`.
 - [x] 1.3 Add `LICENSE` (MIT), a `.gitignore` covering `node_modules/`, `dist/` and `.env.local`, and SPDX headers on every source file. Verify: `grep -L SPDX-License-Identifier` over `src/**/*.ts` and the config files lists nothing.
-- [x] 1.4 Create `BellNotificationModule` in `src/index.ts`. It logs one startup line through `LogService`. Link the repo into Tabby's plugins folder, as `AGENTS.md` describes. Verify: after restarting Tabby, `log.txt` contains the startup line.
+- [x] 1.4 Create `BellIndicatorModule` in `src/index.ts`. It logs one startup line through `LogService`. Link the repo into Tabby's plugins folder, as `AGENTS.md` describes. Verify: after restarting Tabby, `log.txt` contains the startup line.
 
 ## 2. DOM spike in a running Tabby
 
@@ -35,7 +35,7 @@
 
 ## 4. Bell detection
 
-- [x] 4.1 Implement `BellDecorator extends TerminalDecorator`: in `attach()`, subscribe to `terminal.frontend.bell$` and call `ring`; in `detach()`, call `forget` and then `super.detach()`. Register it as `TerminalDecorator` with `multi: true` in `BellNotificationModule` (design D1). Verify: unit tests with a fake terminal whose `frontend.bell$` is a `Subject` show that a bell calls `ring` and that detach stops listening and calls `forget`.
+- [x] 4.1 Implement `BellDecorator extends TerminalDecorator`: in `attach()`, subscribe to `terminal.frontend.bell$` and call `ring`; in `detach()`, call `forget` and then `super.detach()`. Register it as `TerminalDecorator` with `multi: true` in `BellIndicatorModule` (design D1). Verify: unit tests with a fake terminal whose `frontend.bell$` is a `Subject` show that a bell calls `ring` and that detach stops listening and calls `forget`.
 
 ## 5. Header renderer
 
@@ -46,7 +46,7 @@
   - one warning and no throw when the expected elements are missing.
 
   Verify: jsdom unit tests on a fixture copied from the current `tab-header` template cover pinned and unpinned placement, only the ringing tab marked, reorder, removal after clearing, a count mismatch skipping the sync, and the missing-elements warning.
-- [x] 5.2 Wire the triggers: `changed$`, `tabsChanged$`, `activeTabChange$`, the end of a drag, and a `MutationObserver` on `.tabs`. Batch them to one sync per animation frame, pause during a drag, and start everything on `AppService.ready$` from `BellNotificationModule`. Verify: unit tests with fake observables show triggers are batched, syncs are paused during a drag and resume after it, and the renderer's own DOM changes don't re-trigger a sync.
+- [x] 5.2 Wire the triggers: `changed$`, `tabsChanged$`, `activeTabChange$`, the end of a drag, and a `MutationObserver` on `.tabs`. Batch them to one sync per animation frame, pause during a drag, and start everything on `AppService.ready$` from `BellIndicatorModule`. Verify: unit tests with fake observables show triggers are batched, syncs are paused during a drag and resume after it, and the renderer's own DOM changes don't re-trigger a sync.
 
 ## 6. Documentation and integration check
 

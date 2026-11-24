@@ -116,10 +116,10 @@ The indicator copies `.pin-indicator`'s layout (flex, 12px, opacity 0.8, right m
 - *Alternative:* map headers to tabs by their tooltip or title text. Rejected: not unique.
 
 ### D5. Plugin module and scaffold
-- `src/index.ts` defines `BellNotificationModule` (`NgModule`). It provides `{ provide: TerminalDecorator, useClass: BellDecorator, multi: true }` and starts the renderer once `AppService.ready$` fires. It logs one startup line through `LogService`, so `log.txt` shows the plugin loaded.
+- `src/index.ts` defines `BellIndicatorModule` (`NgModule`). It provides `{ provide: TerminalDecorator, useClass: BellDecorator, multi: true }` and starts the renderer once `AppService.ready$` fires. It logs one startup line through `LogService`, so `log.txt` shows the plugin loaded.
 - There is no `ConfigProvider`, because the plugin has no settings.
 - The scaffold follows `AGENTS.md`:
-  - Package name `tabby-bell-notification`, the `tabby-plugin` keyword and the `author` field.
+  - Package name `tabby-bell-indicator`, the `tabby-plugin` keyword and the `author` field.
   - Angular 15 and RxJS 7, plus `tabby-core` / `tabby-terminal`, as peer and dev dependencies only, and listed as `externals` in webpack.
   - vitest, with `jsdom` as the environment for the adapter tests.
   - An SPDX header on every source file. The license defaults to MIT, the same as upstream Tabby. Changing it only affects `package.json`, `LICENSE` and the headers.

@@ -1,5 +1,5 @@
 {
-  "name": "tabby-bell-notification",
+  "name": "tabby-bell-indicator",
   "version": "0.1.0",
   "description": "Shows a bell icon on Tabby tab headers when a terminal rings the bell",
   "keywords": [

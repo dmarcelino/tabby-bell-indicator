@@ -17,18 +17,18 @@ import { TabHeaderBellRenderer, startTabHeaderBellSync } from './tabbyAdapter'
         { provide: TerminalDecorator, useClass: BellDecorator, multi: true },
     ],
 })
-export default class BellNotificationModule {
+export default class BellIndicatorModule {
     constructor (app: AppService, log: LogService, bells: BellStateService<BaseTabComponent>, zone: NgZone) {
-        const logger = log.create('bell-notification')
+        const logger = log.create('bell-indicator')
         // log.txt only records the message, not the logger name.
-        logger.info('tabby-bell-notification: plugin loaded')
+        logger.info('tabby-bell-indicator: plugin loaded')
 
         app.ready$.subscribe(() => {
             const renderer = new TabHeaderBellRenderer({
                 root: document,
                 tabs: () => app.tabs,
                 isRinging: tab => bells.isRinging(tab),
-                warn: message => logger.warn(`tabby-bell-notification: ${message}`),
+                warn: message => logger.warn(`tabby-bell-indicator: ${message}`),
             })
             // The sync loop only touches the DOM, never Angular state, so keep
             // its frames and DOM observers out of Angular's zone; otherwise every
