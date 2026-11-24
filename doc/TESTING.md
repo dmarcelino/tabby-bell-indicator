@@ -33,7 +33,7 @@ Two more pitfalls:
 
 | Step | Result |
 |---|---|
-| Plugin startup | `log.txt` contains `tabby-bell-notification: plugin loaded` |
+| Plugin startup | `log.txt` contains the plugin's startup line |
 | Initial render, 15 tabs, tab bar on top | Pass: bells on even indices, before `.name`. Font Awesome regular (`far fa-bell`) renders as an outline bell |
 | Open 3 tabs | Pass |
 | Pin a tab (Tabby moves it to index 0, shifting every other tab) | Pass: the bell follows the index mapping; pin, then bell, then title |

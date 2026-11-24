@@ -1,4 +1,4 @@
-# tabby-bell-notification
+# tabby-bell-indicator
 
 A [Tabby](https://github.com/Eugeny/tabby) plugin that shows a bell icon in a tab's header when a terminal in it rings the bell (BEL, `\x07`). You can then tell which tabs asked for your attention, for example a finished build or a prompt waiting for input. The icon is separate from Tabby's activity line, which any output triggers.
 
@@ -33,25 +33,25 @@ npm ci
 npm run build
 ```
 
-Link the repo into Tabby's user plugins folder as `plugins/node_modules/tabby-bell-notification`, then restart Tabby. Run the commands from the repo folder. The first command creates `plugins/node_modules` if Tabby hasn't created it yet, which happens when no plugin has been installed.
+Link the repo into Tabby's user plugins folder as `plugins/node_modules/tabby-bell-indicator`, then restart Tabby. Run the commands from the repo folder. The first command creates `plugins/node_modules` if Tabby hasn't created it yet, which happens when no plugin has been installed.
 
 - macOS:
   ```sh
   mkdir -p ~/Library/Application\ Support/tabby/plugins/node_modules
-  ln -s "$PWD" ~/Library/Application\ Support/tabby/plugins/node_modules/tabby-bell-notification
+  ln -s "$PWD" ~/Library/Application\ Support/tabby/plugins/node_modules/tabby-bell-indicator
   ```
 - Linux:
   ```sh
   mkdir -p ~/.config/tabby/plugins/node_modules
-  ln -s "$PWD" ~/.config/tabby/plugins/node_modules/tabby-bell-notification
+  ln -s "$PWD" ~/.config/tabby/plugins/node_modules/tabby-bell-indicator
   ```
 - Windows (PowerShell):
   ```powershell
   New-Item -ItemType Directory -Force -Path "$env:APPDATA\tabby\plugins\node_modules" | Out-Null
-  New-Item -ItemType Junction -Path "$env:APPDATA\tabby\plugins\node_modules\tabby-bell-notification" -Target $PWD
+  New-Item -ItemType Junction -Path "$env:APPDATA\tabby\plugins\node_modules\tabby-bell-indicator" -Target $PWD
   ```
 
-To check that it loaded, look in `log.txt` in Tabby's data folder (the parent of `plugins/`) for the line `tabby-bell-notification: plugin loaded`.
+To check that it loaded, look in `log.txt` in Tabby's data folder (the parent of `plugins/`) for the line `tabby-bell-indicator: plugin loaded`.
 
 Restart Tabby after every build.
 

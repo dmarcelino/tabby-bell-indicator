@@ -6,7 +6,7 @@ When a terminal rings the bell (BEL, `\x07`) in a tab you are not looking at, Ta
 
 ## What Changes
 
-- New Tabby plugin (`tabby-bell-notification`), built from scratch in this repo: package, build, test and typecheck setup that follows `AGENTS.md`.
+- New Tabby plugin (`tabby-bell-indicator`), built from scratch in this repo: package, build, test and typecheck setup that follows `AGENTS.md`.
 - Shows a bell icon (Font Awesome `far fa-bell`) in a terminal tab's header, right after the pin icon, when the terminal rings the bell.
 - A bell in a split pane shows on the top-level tab that contains it. The tab shows the icon while any pane inside it, at any nesting depth, has an unseen bell.
 - Clears the icon when the bell is seen:

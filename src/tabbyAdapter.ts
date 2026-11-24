@@ -9,7 +9,7 @@
 import { Observable, Subscription, merge } from 'rxjs'
 
 export const INDICATOR_CLASS = 'bell-indicator'
-const STYLE_ID = 'tabby-bell-notification-style'
+const STYLE_ID = 'tabby-bell-indicator-style'
 
 // tabby-core's appRoot template: `.content.main` is rendered once (after
 // AppService.ready$); its child `.tab-bar` is destroyed while the window is

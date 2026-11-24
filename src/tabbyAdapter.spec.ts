@@ -203,7 +203,7 @@ describe('TabHeaderBellRenderer', () => {
         renderer.sync()
         renderer.sync()
 
-        const styles = document.head.querySelectorAll('style#tabby-bell-notification-style')
+        const styles = document.head.querySelectorAll('style#tabby-bell-indicator-style')
         expect(styles).toHaveLength(1)
         expect(styles[0].textContent).toContain(`.${INDICATOR_CLASS}`)
     })
@@ -216,7 +216,7 @@ describe('TabHeaderBellRenderer', () => {
         expect(() => renderer.sync()).not.toThrow()
         expect(warn).not.toHaveBeenCalled()
         expect(document.querySelector(`.${INDICATOR_CLASS}`)).toBeNull()
-        expect(document.getElementById('tabby-bell-notification-style')).toBeNull()
+        expect(document.getElementById('tabby-bell-indicator-style')).toBeNull()
     })
 
     it('warns once and does not throw when the tab bar host is missing', () => {
