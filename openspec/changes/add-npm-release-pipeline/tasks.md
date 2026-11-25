@@ -82,7 +82,7 @@
   - `npm run typecheck`, `npm test` and `npm run build` pass with no new warnings;
   - `openspec validate add-npm-release-pipeline --strict` passes;
   - `grep -L SPDX-License-Identifier .github/workflows/*.yml .github/dependabot.yml` lists nothing.
-- [ ] 5.2 After the user confirms pushing the branch and opening a PR: verify `gh pr checks` shows `ci.yml` passing on ubuntu, macOS and Windows, and that no release workflow ran.
+- [x] 5.2 After the user confirms pushing the branch and opening a PR: verify `gh pr checks` shows `ci.yml` passing on ubuntu, macOS and Windows, and that no release workflow ran.
 
 ## 6. First release, 0.1.0 (each external step only after the user confirms it)
 
