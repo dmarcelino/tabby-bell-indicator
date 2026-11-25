@@ -24,7 +24,17 @@ A pane hidden behind a maximized pane keeps its icon until you open the tab agai
 
 There are no settings. To turn the feature off, disable the plugin in Tabby's settings (Settings, Plugins).
 
+## Install
+
+1. In Tabby, open Settings → Plugins.
+2. Search for `bell-indicator`. Tabby lists the plugin under that name, without the `tabby-` prefix.
+3. Install it, then restart Tabby.
+
+Tabby finds plugins through npm's search. A new release can take a while to appear in the list, until npm's search index includes it.
+
 ## Install from source
+
+Use this to run a build of this repo instead, for example to try unreleased changes. If you installed the plugin from Settings → Plugins, uninstall it there first: both ways use the same folder, `plugins/node_modules/tabby-bell-indicator`.
 
 Requires Node.js and npm.
 
