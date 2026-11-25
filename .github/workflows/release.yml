@@ -1,0 +1,210 @@
+# SPDX-License-Identifier: MIT
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  verify:
+    name: Verify and pack
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Check tag matches package.json version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          PKG_VERSION="$(node -p 'require("./package.json").version')"
+          if [ "$TAG" != "v$PKG_VERSION" ]; then
+            echo "::error::Tag $TAG does not match package.json version $PKG_VERSION (expected tag v$PKG_VERSION)"
+            exit 1
+          fi
+          echo "Tag $TAG matches package.json version $PKG_VERSION"
+
+      - name: Check npm version
+        run: |
+          set -euo pipefail
+          NPM_VERSION="$(npm --version)" node -e '
+            const min = [11, 5, 1];
+            const raw = process.env.NPM_VERSION.trim();
+            const cur = raw.split("-")[0].split(".").map(Number);
+            let ok = true;
+            for (let i = 0; i < 3; i++) {
+              if (cur[i] !== min[i]) { ok = cur[i] > min[i]; break; }
+            }
+            if (!ok || cur.length !== 3 || cur.some(Number.isNaN)) {
+              console.log("::error::npm " + raw + " does not satisfy >= " + min.join(".") + " (needed for trusted publishing)");
+              process.exit(1);
+            }
+            console.log("npm " + raw + " >= " + min.join("."));
+          '
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Pack
+        id: pack
+        run: |
+          set -euo pipefail
+          TARBALL="$(npm pack --json | node -e 'let s = ""; process.stdin.on("data", d => s += d).on("end", () => console.log(JSON.parse(s)[0].filename))')"
+          if [ ! -f "$TARBALL" ]; then
+            echo "::error::npm pack did not produce $TARBALL"
+            exit 1
+          fi
+          echo "Packed $TARBALL"
+          echo "tarball=$TARBALL" >> "$GITHUB_OUTPUT"
+
+      - name: Check package contents
+        env:
+          TARBALL: ${{ steps.pack.outputs.tarball }}
+        run: |
+          set -euo pipefail
+          # File entries only; npm tarballs normally have no directory entries.
+          FILES="$(tar -tzf "$TARBALL" | grep -v '/$' || true)"
+          echo "Contents of $TARBALL:"
+          echo "$FILES"
+          status=0
+          for required in package/package.json package/dist/index.js package/LICENSE package/README.md; do
+            if ! grep -qxF "$required" <<<"$FILES"; then
+              echo "::error::$TARBALL is missing $required"
+              status=1
+            fi
+          done
+          UNEXPECTED="$(grep -vxE 'package/(package\.json|README\.md|LICENSE|dist/.+)' <<<"$FILES" || true)"
+          if [ -n "$UNEXPECTED" ]; then
+            while IFS= read -r entry; do
+              echo "::error::$TARBALL contains unexpected file $entry"
+            done <<<"$UNEXPECTED"
+            status=1
+          fi
+          MAPS="$(grep -E '\.map$' <<<"$FILES" || true)"
+          if [ -n "$MAPS" ]; then
+            while IFS= read -r entry; do
+              echo "::error::$TARBALL contains source map $entry"
+            done <<<"$MAPS"
+            status=1
+          fi
+          exit "$status"
+
+      - name: Upload package
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: package
+          path: ${{ steps.pack.outputs.tarball }}
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Publish to npm
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: npm
+      url: https://www.npmjs.com/package/tabby-bell-indicator
+    permissions:
+      contents: read
+      id-token: write # trusted publishing (OIDC) and npm provenance
+    steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Check npm version
+        run: |
+          set -euo pipefail
+          NPM_VERSION="$(npm --version)" node -e '
+            const min = [11, 5, 1];
+            const raw = process.env.NPM_VERSION.trim();
+            const cur = raw.split("-")[0].split(".").map(Number);
+            let ok = true;
+            for (let i = 0; i < 3; i++) {
+              if (cur[i] !== min[i]) { ok = cur[i] > min[i]; break; }
+            }
+            if (!ok || cur.length !== 3 || cur.some(Number.isNaN)) {
+              console.log("::error::npm " + raw + " does not satisfy >= " + min.join(".") + " (needed for trusted publishing)");
+              process.exit(1);
+            }
+            console.log("npm " + raw + " >= " + min.join("."));
+          '
+
+      - name: Download package
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: package
+          path: ${{ runner.temp }}/package
+
+      - name: Publish
+        env:
+          # Bootstrap only: empty once the npm environment's NPM_TOKEN secret is
+          # deleted, and npm then authenticates with trusted publishing (OIDC).
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          # Absolute path on purpose: npm reads a relative "dir/file.tgz" as a GitHub shorthand.
+          TARBALLS=("$RUNNER_TEMP"/package/*.tgz)
+          if [ "${#TARBALLS[@]}" -ne 1 ]; then
+            echo "::error::Expected exactly one .tgz in the package artifact, found ${#TARBALLS[@]}"
+            exit 1
+          fi
+          npm publish "${TARBALLS[0]}" --provenance
+
+  github-release:
+    name: Create GitHub Release
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write # create the GitHub Release
+    steps:
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "GitHub Release $TAG already exists; skipping."
+            exit 0
+          fi
+          gh release create "$TAG" --verify-tag --generate-notes --title "$TAG"

@@ -7,6 +7,14 @@
   ],
   "author": "Dario Marcelino",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dmarcelino/tabby-bell-indicator.git"
+  },
+  "homepage": "https://github.com/dmarcelino/tabby-bell-indicator#readme",
+  "bugs": {
+    "url": "https://github.com/dmarcelino/tabby-bell-indicator/issues"
+  },
   "main": "dist/index.js",
   "files": [
     "dist",
@@ -17,7 +25,8 @@
     "build": "webpack --mode production",
     "watch": "webpack --mode development --watch",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
     "@angular/core": "^15",
