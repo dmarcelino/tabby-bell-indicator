@@ -1,0 +1,68 @@
+# SPDX-License-Identifier: MIT
+# Builds the project page from README.md and deploys it to GitHub Pages.
+# Called by release.yml after a release is published; can also be run by hand
+# (Actions -> Pages -> Run workflow) on main or a release tag.
+name: Pages
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: Build page
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build page
+        env:
+          # Links to repo files point to the ref being deployed (a tag, or main).
+          SITE_REF: ${{ github.ref_name }}
+        run: npm run site
+
+      - name: Upload page
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: _site
+
+  deploy:
+    name: Deploy page
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # A newer deploy waits for a running one instead of cutting it off.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write # deploy to GitHub Pages
+      id-token: write # verify the deployment's origin (OIDC)
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

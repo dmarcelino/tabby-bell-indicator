@@ -1,20 +1,35 @@
 # Releasing
 
-How the plugin is published to npm, for the maintainer. Tabby's plugin manager finds plugins by searching npm for the keyword `tabby-plugin`, and lists this one as `bell-indicator`. A version that isn't on npm can't be installed from Tabby.
+How the plugin is published to npm, and how its project page at https://tabby-bell-indicator.dariomarcelino.com is deployed, for the maintainer. Tabby's plugin manager finds plugins by searching npm for the keyword `tabby-plugin`, and lists this one as `bell-indicator`. A version that isn't on npm can't be installed from Tabby.
 
 ## How a release runs
 
-Pushing a tag `vX.Y.Z` starts `.github/workflows/release.yml`. It has three jobs, each starting after the previous one passed:
+Pushing a tag `vX.Y.Z` starts `.github/workflows/release.yml`. It has four jobs. Each starts after the job it depends on passed:
 
 1. **`verify`** checks that the tag equals `v` + the `version` in `package.json`, then runs typecheck, tests and build. It packs the package, checks the tarball's contents and keeps the tarball for the next job. It has no secrets.
 2. **`publish`** runs in the GitHub environment `npm`. It runs `npm publish <tarball> --provenance --access public` on the exact tarball that `verify` checked. It reads the environment secret `NPM_TOKEN` as `NODE_AUTH_TOKEN`. When that secret doesn't exist, npm uses trusted publishing instead.
-3. **`github-release`** creates the GitHub Release for the tag, with generated notes. If the release already exists, it does nothing.
+3. **`github-release`** (after `publish`) creates the GitHub Release for the tag, with generated notes. If the release already exists, it does nothing.
+4. **`pages`** (after `publish`, next to `github-release`) runs `.github/workflows/pages.yml`: it builds the project page from the tag's `README.md` and deploys it to GitHub Pages. Links on the page to repo files point to the tag. It has no npm credentials.
 
-Two rules follow from this:
-- `github-release` can be re-run safely.
+Three rules follow from this:
+- `github-release` and `pages` can be re-run safely.
 - Never re-run `publish` after it succeeded. npm never accepts the same version twice.
+- A release that fails before `publish` leaves the page as it was.
 
-`.github/workflows/ci.yml` runs typecheck, tests and build on Linux, macOS and Windows for every pull request and every push to `main`. It never publishes.
+`.github/workflows/ci.yml` runs typecheck, tests, build and the page build (`npm run site`) on Linux, macOS and Windows for every pull request and every push to `main`. It never publishes or deploys.
+
+## Project page
+
+The page is generated from `README.md` by `site/build.mjs`, with the template and stylesheet in `site/`. To preview it, run `npm run site` and open `_site/index.html` in a browser. `SITE_REF=<ref>` sets the git ref that links to repo files point to; it defaults to `main`.
+
+Besides each release, the page can be deployed by hand, for example after a styling fix: Actions → Pages → Run workflow, or with `gh`:
+
+```sh
+gh workflow run pages.yml --ref v<latest version>
+gh run watch   # pick the Pages run
+```
+
+Run it on the latest release tag, so the page keeps describing the version on npm. Only tags that contain `pages.yml` can be used, which excludes `v0.1.0`. Running it on `main` also works, but the page then shows `main`'s README, including anything not released yet. The `github-pages` environment refuses any other branch.
 
 ## One-time setup
 
@@ -80,6 +95,52 @@ EOF
 `actor_id` 5 is the repository admin role. The ruleset on `main` uses the same value.
 
 Check: `gh api repos/dmarcelino/tabby-bell-indicator/rulesets` lists the tag ruleset next to the one for `main`.
+
+### Project page: domain, DNS and GitHub Pages
+
+The page is served from `tabby-bell-indicator.dariomarcelino.com`. DNS for `dariomarcelino.com` is at Porkbun.
+
+1. **Verify the domain** on your GitHub account, so no other account can use it for GitHub Pages: profile picture → Settings → Pages → Add a domain, enter `dariomarcelino.com`. GitHub shows a TXT record (`_github-pages-challenge-dmarcelino`) and its value.
+2. **Add the DNS records** at Porkbun (Domain Management → `dariomarcelino.com` → DNS, or its API):
+
+   | Type | Host | Answer | TTL |
+   |---|---|---|---|
+   | TXT | `_github-pages-challenge-dmarcelino` | the value from step 1 | 600 |
+   | CNAME | `tabby-bell-indicator` | `dmarcelino.github.io` | 600 |
+
+   Check: `dig +short tabby-bell-indicator.dariomarcelino.com` prints `dmarcelino.github.io.` and four `185.199.x.153` addresses.
+3. **Click Verify** in GitHub's Pages settings.
+4. **Turn on Pages**, deployed by GitHub Actions: repo Settings → Pages → Source: GitHub Actions. Or:
+
+   ```sh
+   gh api -X POST repos/dmarcelino/tabby-bell-indicator/pages -f build_type=workflow
+   ```
+
+   This creates the `github-pages` environment, which allows deploys from `main`.
+5. **Allow release tags to deploy**, so the release's `pages` job can: Settings → Environments → `github-pages` → Add deployment branch or tag rule, Ref type Tag, pattern `v*`. Or:
+
+   ```sh
+   gh api -X POST repos/dmarcelino/tabby-bell-indicator/environments/github-pages/deployment-branch-policies \
+     -f name='v*' -f type=tag
+   ```
+
+   Check: `gh api repos/dmarcelino/tabby-bell-indicator/environments/github-pages/deployment-branch-policies` lists the `main` branch and the `v*` tag.
+6. **Set the custom domain**: Settings → Pages → Custom domain. Or:
+
+   ```sh
+   gh api -X PUT repos/dmarcelino/tabby-bell-indicator/pages -f cname=tabby-bell-indicator.dariomarcelino.com
+   ```
+
+   No `CNAME` file is needed: deploys from a workflow ignore it.
+7. **Deploy once** by hand (see [Project page](#project-page)). Once GitHub has issued the certificate, which can take up to an hour, **enforce HTTPS**: Settings → Pages → Enforce HTTPS. Or:
+
+   ```sh
+   gh api -X PUT repos/dmarcelino/tabby-bell-indicator/pages -F https_enforced=true
+   ```
+
+   Check: `curl -sI http://tabby-bell-indicator.dariomarcelino.com/` redirects to `https://`.
+
+To take the page down: turn off Pages (Settings → Pages → Unpublish site, or `gh api -X DELETE repos/dmarcelino/tabby-bell-indicator/pages`), then delete the CNAME record at Porkbun. Never leave the CNAME pointing to GitHub without a site behind it. Releases to npm don't depend on the page.
 
 ## First release: 0.1.0
 
@@ -173,6 +234,7 @@ Then run the `npm trust github …` command again.
 - `npm view tabby-bell-indicator version` prints the new version.
 - The version's page on npmjs.com (`https://www.npmjs.com/package/tabby-bell-indicator/v/<version>`) shows provenance. It must point to `dmarcelino/tabby-bell-indicator`, `.github/workflows/release.yml` and the tagged commit.
 - `gh release view v<version>` shows the GitHub Release with generated notes.
+- https://tabby-bell-indicator.dariomarcelino.com shows the new README, and its links to repo files point to `v<version>`.
 - In Tabby, Settings → Plugins, search `bell-indicator`. Check that the new version is listed, install or update it, and restart Tabby. `log.txt` must contain `tabby-bell-indicator: plugin loaded`, and a bell must show the icon. The listing depends on npm's search index and can take a while.
 
 Record the result in [`TESTING.md`](TESTING.md):
@@ -212,12 +274,18 @@ gh run rerun --job <databaseId>
 
 Don't use "Re-run all jobs": it would run `publish` again. GitHub allows re-runs for 30 days. After that, create the release by hand: `gh release create v<version> --verify-tag --generate-notes`.
 
+### `pages` fails
+
+The version is on npm; only the page is behind. Re-run only the `pages` job, the same way as for `github-release` above, or deploy by hand with `gh workflow run pages.yml --ref v<version>`. Don't use "Re-run all jobs".
+
+If the deploy is refused with "not allowed to deploy to github-pages due to environment protection rules", the `v*` tag rule on the `github-pages` environment is missing. See [Project page: domain, DNS and GitHub Pages](#project-page-domain-dns-and-github-pages).
+
 ### `publish` fails
 
 First check whether the version reached npm: `npm view tabby-bell-indicator@<version> version`.
 
-- **It is on npm:** don't re-run anything. Create the GitHub Release by hand: `gh release create v<version> --verify-tag --generate-notes`.
-- **It is not on npm, and the error is about authentication or trusted publishing:** the npm setup doesn't match the workflow. Compare `npm trust list tabby-bell-indicator` with: repo `dmarcelino/tabby-bell-indicator`, file `release.yml`, environment `npm`. Fix it by revoking the setup and creating it again (see [Before 0.1.1](#before-011-trusted-publishing)). Then re-run the failed jobs: `gh run rerun <run-id> --failed`, or "Re-run failed jobs" on GitHub. That runs `publish` and then `github-release`. If `publish` can't find the package artifact, for example because it has expired, use "Re-run all jobs": nothing was published, so that is safe.
+- **It is on npm:** don't re-run anything. Create the GitHub Release by hand: `gh release create v<version> --verify-tag --generate-notes`, and deploy the page by hand: `gh workflow run pages.yml --ref v<version>`.
+- **It is not on npm, and the error is about authentication or trusted publishing:** the npm setup doesn't match the workflow. Compare `npm trust list tabby-bell-indicator` with: repo `dmarcelino/tabby-bell-indicator`, file `release.yml`, environment `npm`. Fix it by revoking the setup and creating it again (see [Before 0.1.1](#before-011-trusted-publishing)). Then re-run the failed jobs: `gh run rerun <run-id> --failed`, or "Re-run failed jobs" on GitHub. That runs `publish` and then `github-release` and `pages`. If `publish` can't find the package artifact, for example because it has expired, use "Re-run all jobs": nothing was published, so that is safe.
 - **Any other error with nothing on npm:** fix the cause on `main` and handle it like a failed `verify`.
 
 ### A bad version was published
