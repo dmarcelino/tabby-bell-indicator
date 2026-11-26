@@ -138,3 +138,18 @@ The bell icon itself was not re-tested. The rename changed only names, not behav
 | Tab 2 is opened again | Pass: the icon clears at once |
 
 Observation: with the Portuguese - PC keyboard layout, `keystroke "1" using command down` didn't switch Tabby to tab 1. The cause wasn't investigated. Ctrl-Tab and Ctrl-Shift-Tab, sent as key code 48, work on any layout.
+
+## 2026-11-26: Install of the npm release 0.1.0 (release task 6.5)
+
+**Setup:** Tabby on Windows, version not checked. The plugin was installed from Settings → Plugins, not linked from a checkout.
+
+**Listing:** 0.1.0 became available on npm at 09:57 UTC. By 10:03 UTC, npm's keyword search (`keywords:tabby-plugin`, the query Tabby's plugin manager sends) returned it. But npm gave it a search score of 0, against about 46–50 for the top results, and the typed text didn't narrow the results. "bell", "bell-indicator" and "tabby-bell-indicator" all returned the same 218 packages, with this one at rank 214. Tabby sorts by that score and shows every result, so `bell-indicator` was at the bottom of the plugin list. It was still there at the time of this test.
+
+| Check | Result |
+|---|---|
+| Listed in Settings → Plugins | Pass: `bell-indicator` 0.1.0, at the bottom of the list (see above) |
+| Install and restart | Pass |
+| A bell in a tab that isn't open | Pass: the icon shows |
+| `log.txt` startup line | Not checked |
+
+This is the first run of the plugin on Windows. The earlier tests were all on macOS.

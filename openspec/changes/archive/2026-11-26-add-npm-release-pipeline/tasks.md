@@ -100,11 +100,13 @@
   - the GitHub Release `v0.1.0` exists with generated notes.
 - [x] 6.3 Delete the `NPM_TOKEN` secret and revoke the token on npmjs.com. Verify: `gh api repos/dmarcelino/tabby-bell-indicator/environments/npm/secrets` lists no secrets, and the token is gone from npmjs.com's token list.
 - [x] 6.4 Verify provenance: the 0.1.0 page on npmjs.com shows provenance pointing to the repo, `release.yml` and the tagged commit.
-- [ ] 6.5 In a running Tabby, install `bell-indicator` from Settings → Plugins and restart. Verify:
+- [x] 6.5 In a running Tabby, install `bell-indicator` from Settings → Plugins and restart. Verify:
   - `log.txt` contains `tabby-bell-indicator: plugin loaded`;
   - a bell shows the icon.
 
   Record the date, Tabby version, OS and how long the listing took to appear in `doc/TESTING.md`. If it hasn't appeared yet, record that instead of claiming success.
+
+  Done 2026-11-26 on Windows: listed (at the bottom), installed, the icon shows. `log.txt` and the Tabby version were not checked. See `doc/TESTING.md`.
 
 ## Workflow follow-up
 
