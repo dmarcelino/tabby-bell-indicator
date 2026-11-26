@@ -38,7 +38,7 @@ Tabby finds plugins through npm's search. A new release can take a while to appe
 
 The icon only shows when a program actually rings the bell. Claude Code may notify you in another way, and then the icon doesn't show when Claude Code finishes or needs your input. To make it ring the bell:
 
-1. In Claude Code, run `/config` and search for `notif`.
+1. In Claude Code, run `/config` and search for `notifications`.
 2. Set **Local notifications** to **Terminal bell (\a)**.
 
 This is stored in `~/.claude/settings.json` as `"preferredNotifChannel": "terminal_bell"`.
