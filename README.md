@@ -9,6 +9,8 @@ A [Tabby](https://github.com/Eugeny/tabby) plugin that shows a bell icon in a ta
 - Only real bells count. A BEL that ends a control sequence, such as the one that sets the window title (`ESC ] 0;title BEL`), does not.
 - Tabby's own bell behaviour (sound, visual bell, frame flash, activity line) is unchanged. The icon shows whatever Tabby's bell setting is, including "off".
 
+![A command rings the bell in tab 2 while tab 1 is open. Tab 2's header shows the bell icon, which clears when tab 2 is opened.](doc/demo.gif)
+
 ## When the icon clears
 
 | Where the bell rang | When the icon clears |
@@ -31,6 +33,15 @@ There are no settings. To turn the feature off, disable the plugin in Tabby's se
 3. Install it, then restart Tabby.
 
 Tabby finds plugins through npm's search. A new release can take a while to appear in the list, until npm's search index includes it.
+
+## Tip: Claude Code
+
+The icon only shows when a program actually rings the bell. Claude Code may notify you in another way, and then the icon doesn't show when Claude Code finishes or needs your input. To make it ring the bell:
+
+1. In Claude Code, run `/config` and search for `notifications`.
+2. Set **Local notifications** to **Terminal bell (\a)**.
+
+This is stored in `~/.claude/settings.json` as `"preferredNotifChannel": "terminal_bell"`.
 
 ## Install from source
 

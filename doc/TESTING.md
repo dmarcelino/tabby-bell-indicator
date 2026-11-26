@@ -126,3 +126,15 @@ Observation: when a split tab gets focus, Tabby re-focuses its last focused pane
 | Plugin startup | Pass: `log.txt` contains `tabby-bell-indicator: plugin loaded`, and no plugin warnings |
 
 The bell icon itself was not re-tested. The rename changed only names, not behaviour.
+
+## 2026-11-26: Demo recording for the README
+
+**Setup:** Tabby 1.0.238 on macOS 27.2, started with `--user-data-dir` pointing at an empty folder. That profile had only this plugin (build from `main`) and one local `/bin/bash` profile with a plain `$ ` prompt. Keystrokes were sent with AppleScript (System Events) and frames captured with `screencapture`. The GIF is `doc/demo.gif`.
+
+| Case | Result |
+|---|---|
+| Plugin startup | Pass: `log.txt` contains `tabby-bell-indicator: plugin loaded` |
+| A second tab runs `sleep 3; echo build done; tput bel`, and tab 1 is opened before the bell | Pass: tab 2 shows the bell icon next to Tabby's activity line; tab 1 shows none |
+| Tab 2 is opened again | Pass: the icon clears at once |
+
+Observation: with the Portuguese - PC keyboard layout, `keystroke "1" using command down` didn't switch Tabby to tab 1. The cause wasn't investigated. Ctrl-Tab and Ctrl-Shift-Tab, sent as key code 48, work on any layout.
