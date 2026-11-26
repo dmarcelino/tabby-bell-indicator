@@ -29,7 +29,7 @@ Tasks marked **[Maintainer]** need the maintainer: a web UI, a merge or a decisi
   - `SITE_REF=v9.9.9 npm run site` gives links to `…/blob/v9.9.9/doc/TESTING.md` and `…/blob/v9.9.9/LICENSE` (the footer's license link included);
   - with a temporary link to `doc/missing.md` in the README, `npm run site` exits non-zero and names `doc/missing.md` (then revert the README);
   - `npm run typecheck`, `npm test` and `npm run build` pass with no new warnings.
-- [ ] 2.5 Check the built page by opening `_site/index.html` in a browser, side by side with dariomarcelino.com. Verify, with screenshots in the PR description:
+- [x] 2.5 Check the built page by opening `_site/index.html` in a browser, side by side with dariomarcelino.com. Verify, with screenshots in the PR description:
   - light and dark mode match the main site's colours, fonts, column width and header;
   - at 360 px wide, only code blocks scroll sideways;
   - the demo image loads, and the Source, npm and avatar links go to the right places.
@@ -51,18 +51,18 @@ Tasks marked **[Maintainer]** need the maintainer: a web UI, a merge or a decisi
 
 ## 4. First deploy and live checks
 
-- [ ] 4.1 **[Maintainer]** Review and merge the PR. Verify: CI on `main` passes after the merge.
-- [ ] 4.2 **[Agent]** Start the first deploy by hand on `main` (`gh workflow run pages.yml --ref main`). Verify: the run succeeds, and `curl -sI https://tabby-bell-indicator.dariomarcelino.com/` returns `200`. If HTTPS isn't ready yet, `http://` returns `200` and HTTPS is checked in 4.3.
-- [ ] 4.3 **[Agent]** Once GitHub has issued the certificate, turn on Enforce HTTPS (`gh api -X PUT repos/dmarcelino/tabby-bell-indicator/pages -F https_enforced=true`). Verify: `curl -sI http://tabby-bell-indicator.dariomarcelino.com/` returns a redirect to `https://`, and the `https://` address returns `200`.
-- [ ] 4.4 **[Agent]** Set the repo's Website field (`gh repo edit dmarcelino/tabby-bell-indicator --homepage https://tabby-bell-indicator.dariomarcelino.com`). Verify: `gh repo view dmarcelino/tabby-bell-indicator --json homepageUrl` prints the domain.
-- [ ] 4.5 **[Agent]** Check the live page against the spec. Verify:
+- [x] 4.1 **[Maintainer]** Review and merge the PR. Verify: CI on `main` passes after the merge.
+- [x] 4.2 **[Agent]** Start the first deploy by hand on `main` (`gh workflow run pages.yml --ref main`). Verify: the run succeeds, and `curl -sI https://tabby-bell-indicator.dariomarcelino.com/` returns `200`. If HTTPS isn't ready yet, `http://` returns `200` and HTTPS is checked in 4.3.
+- [x] 4.3 **[Agent]** Once GitHub has issued the certificate, turn on Enforce HTTPS (`gh api -X PUT repos/dmarcelino/tabby-bell-indicator/pages -F https_enforced=true`). Verify: `curl -sI http://tabby-bell-indicator.dariomarcelino.com/` returns a redirect to `https://`, and the `https://` address returns `200`.
+- [x] 4.4 **[Agent]** Set the repo's Website field (`gh repo edit dmarcelino/tabby-bell-indicator --homepage https://tabby-bell-indicator.dariomarcelino.com`). Verify: `gh repo view dmarcelino/tabby-bell-indicator --json homepageUrl` prints the domain.
+- [x] 4.5 **[Agent]** Check the live page against the spec. Verify:
   - all of the README's text is there;
   - `doc/demo.gif` loads from the page's own domain;
   - the repo-file links point to `…/blob/main/…`;
   - the Source, npm and avatar links work;
   - the page has no `<script>`;
   - dark mode and the 360 px width look right.
-- [ ] 4.6 **[Maintainer]** Disable or delete the Porkbun API key and `~/.config/porkbun/credentials.env`, unless you keep them for other subdomains. Verify: Porkbun's API Access page shows the key's chosen state.
+- [x] 4.6 **[Maintainer]** Disable or delete the Porkbun API key and `~/.config/porkbun/credentials.env`, unless you keep them for other subdomains. Verify: Porkbun's API Access page shows the key's chosen state.
 
 ## Workflow follow-up
 
