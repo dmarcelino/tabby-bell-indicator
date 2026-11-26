@@ -54,7 +54,7 @@ The maintainer runs `npm version patch|minor|major`, which commits the bump and 
    - runs `npm pack`, checks the tarball's file list, and uploads the `.tgz` as a workflow artifact.
 2. **`publish`** (needs `verify`; `environment: npm`; `id-token: write`, `contents: read`):
    - downloads the tarball;
-   - runs `npm publish <tarball> --provenance`.
+   - runs `npm publish <tarball> --provenance --access public`.
    It has no checkout, no `npm ci` and runs no repo scripts. Publishing a tarball does not run lifecycle scripts, so `prepublishOnly` doesn't run here.
 3. **`github-release`** (needs `publish`; `contents: write`):
    - runs `gh release create "$TAG" --verify-tag --generate-notes`, skipped if the release already exists so a re-run works.
@@ -106,7 +106,7 @@ The user chose the token bootstrap.
 - `homepage`: the repo's `#readme` URL.
 - `bugs`: the repo's `/issues` URL.
 - `scripts.prepublishOnly`: `npm run build`.
-- No `publishConfig.access`, because unscoped packages are public by default.
+- No `publishConfig.access`. Unscoped packages are public by default, but npm refuses provenance for a new package unless access is set explicitly ("Can't generate provenance for new or private package, you must set `access` to public"). The 0.1.0 run failed on this, so the `publish` job passes `--access public` (D2).
 
 ### D10. SPDX headers
 New YAML files get `# SPDX-License-Identifier: MIT` like the other config files (`webpack.config.mjs`). Markdown files don't, which matches `README.md` and `doc/TESTING.md`.

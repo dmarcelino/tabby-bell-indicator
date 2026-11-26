@@ -42,7 +42,7 @@
   - `needs: verify`, `environment: npm`;
   - permissions `id-token: write`, `contents: read`;
   - setup-node with `registry-url: https://registry.npmjs.org`, plus the npm version check;
-  - download the artifact, then `npm publish <tgz> --provenance` with `NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}`;
+  - download the artifact, then `npm publish <tgz> --provenance --access public` with `NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}`;
   - no checkout and no `npm ci` (design D2, D3, D4).
 
   Verify: `actionlint` and `zizmor` report no findings. Reviewing the job shows no repo code or dev dependency runs in it.

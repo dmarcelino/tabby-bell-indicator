@@ -7,7 +7,7 @@ How the plugin is published to npm, for the maintainer. Tabby's plugin manager f
 Pushing a tag `vX.Y.Z` starts `.github/workflows/release.yml`. It has three jobs, each starting after the previous one passed:
 
 1. **`verify`** checks that the tag equals `v` + the `version` in `package.json`, then runs typecheck, tests and build. It packs the package, checks the tarball's contents and keeps the tarball for the next job. It has no secrets.
-2. **`publish`** runs in the GitHub environment `npm`. It runs `npm publish <tarball> --provenance` on the exact tarball that `verify` checked. It reads the environment secret `NPM_TOKEN` as `NODE_AUTH_TOKEN`. When that secret doesn't exist, npm uses trusted publishing instead.
+2. **`publish`** runs in the GitHub environment `npm`. It runs `npm publish <tarball> --provenance --access public` on the exact tarball that `verify` checked. It reads the environment secret `NPM_TOKEN` as `NODE_AUTH_TOKEN`. When that secret doesn't exist, npm uses trusted publishing instead.
 3. **`github-release`** creates the GitHub Release for the tag, with generated notes. If the release already exists, it does nothing.
 
 Two rules follow from this:

@@ -186,7 +186,8 @@ jobs:
             echo "::error::Expected exactly one .tgz in the package artifact, found ${#TARBALLS[@]}"
             exit 1
           fi
-          npm publish "${TARBALLS[0]}" --provenance
+          # --access public: npm refuses provenance for a new package without it
+          npm publish "${TARBALLS[0]}" --provenance --access public
 
   github-release:
     name: Create GitHub Release
