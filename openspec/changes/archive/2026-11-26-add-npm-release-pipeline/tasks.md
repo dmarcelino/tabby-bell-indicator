@@ -22,7 +22,7 @@
   - SPDX header.
 
   Verify: `actionlint` and `zizmor` report no findings on the file. Ask before installing either tool if it is missing.
-- [ ] 2.2 Add `.github/dependabot.yml` for the `github-actions` ecosystem, weekly, with an SPDX header. Verify: `actionlint` doesn't cover it, so check it against GitHub's dependabot.yml schema. After merge, the repo's Insights → Dependency graph → Dependabot tab shows the setup without errors.
+- [x] 2.2 Add `.github/dependabot.yml` for the `github-actions` ecosystem, weekly, with an SPDX header. Verify: `actionlint` doesn't cover it, so check it against GitHub's dependabot.yml schema. After merge, the repo's Insights → Dependency graph → Dependabot tab shows the setup without errors.
 
 ## 3. Release workflow
 
@@ -86,7 +86,7 @@
 
 ## 6. First release, 0.1.0 (each external step only after the user confirms it)
 
-- [ ] 6.1 After the PR is merged, the maintainer:
+- [x] 6.1 After the PR is merged, the maintainer:
   - creates the `npm` environment with deployment tag rule `v*`;
   - adds the `refs/tags/v*` ruleset (block update and delete, admin bypass);
   - adds the bootstrap `NPM_TOKEN` environment secret.
@@ -94,12 +94,12 @@
   Verify:
   - `gh api repos/dmarcelino/tabby-bell-indicator/environments` lists `npm`;
   - `gh api repos/dmarcelino/tabby-bell-indicator/rulesets` lists the tag ruleset.
-- [ ] 6.2 Tag `v0.1.0` on the merge commit on `main` and push it. Verify:
+- [x] 6.2 Tag `v0.1.0` on the merge commit on `main` and push it. Verify:
   - all three release jobs pass;
   - `npm view tabby-bell-indicator version` prints `0.1.0`;
   - the GitHub Release `v0.1.0` exists with generated notes.
-- [ ] 6.3 Delete the `NPM_TOKEN` secret and revoke the token on npmjs.com. Verify: `gh api repos/dmarcelino/tabby-bell-indicator/environments/npm/secrets` lists no secrets, and the token is gone from npmjs.com's token list.
-- [ ] 6.4 Verify provenance: the 0.1.0 page on npmjs.com shows provenance pointing to the repo, `release.yml` and the tagged commit.
+- [x] 6.3 Delete the `NPM_TOKEN` secret and revoke the token on npmjs.com. Verify: `gh api repos/dmarcelino/tabby-bell-indicator/environments/npm/secrets` lists no secrets, and the token is gone from npmjs.com's token list.
+- [x] 6.4 Verify provenance: the 0.1.0 page on npmjs.com shows provenance pointing to the repo, `release.yml` and the tagged commit.
 - [ ] 6.5 In a running Tabby, install `bell-indicator` from Settings → Plugins and restart. Verify:
   - `log.txt` contains `tabby-bell-indicator: plugin loaded`;
   - a bell shows the icon.
