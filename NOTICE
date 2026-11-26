@@ -1,0 +1,9 @@
+tabby-bell-indicator
+Copyright (c) 2026 Dario Marcelino. Licensed under the MIT License, see LICENSE.
+
+This project includes material adapted from other projects:
+
+- site/style.css and the layout of site/template.html are adapted from
+  dariomarcelino.com (https://github.com/dmarcelino/dariomarcelino.com),
+  static/style.css and src/templates.mjs, by Dário Marcelino, the author of
+  this project, who licenses that material here under the MIT License.

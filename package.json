@@ -11,7 +11,7 @@
     "type": "git",
     "url": "git+https://github.com/dmarcelino/tabby-bell-indicator.git"
   },
-  "homepage": "https://github.com/dmarcelino/tabby-bell-indicator#readme",
+  "homepage": "https://tabby-bell-indicator.dariomarcelino.com",
   "bugs": {
     "url": "https://github.com/dmarcelino/tabby-bell-indicator/issues"
   },
@@ -26,7 +26,8 @@
     "watch": "webpack --mode development --watch",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "site": "node site/build.mjs"
   },
   "peerDependencies": {
     "@angular/core": "^15",
@@ -43,6 +44,7 @@
     "@angular/platform-browser-dynamic": "15.2.10",
     "@types/node": "~20.16.15",
     "jsdom": "^26.1.0",
+    "marked": "^18.2.0",
     "rxjs": "7.8.2",
     "tabby-core": "1.0.231-nightly.0",
     "tabby-terminal": "1.0.231-nightly.0",

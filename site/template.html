@@ -1,0 +1,43 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: MIT -->
+<!-- Layout follows dariomarcelino.com; see NOTICE. Filled in by site/build.mjs. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{title}}</title>
+  <meta name="description" content="{{description}}">
+  <link rel="canonical" href="{{canonical}}">
+  <meta name="author" content="Dário Marcelino">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{title}}">
+  <meta property="og:description" content="{{description}}">
+  <meta property="og:url" content="{{canonical}}">
+  <link rel="icon" href="https://dariomarcelino.com/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="wrap">
+    <header class="site-header">
+      <a class="avatar-link" href="https://dariomarcelino.com" aria-label="Dário Marcelino — dariomarcelino.com">
+        <img class="avatar" src="https://dariomarcelino.com/avatar.jpg" width="96" height="96"
+             alt="Portrait of Dário Marcelino">
+      </a>
+      <nav class="site-nav" aria-label="Project">
+          <a href="{{sourceUrl}}">Source</a>
+          <a href="https://www.npmjs.com/package/tabby-bell-indicator">npm</a>
+      </nav>
+    </header>
+    <main id="main">
+      <article class="prose">
+{{content}}
+      </article>
+    </main>
+    <footer class="site-footer">
+      <p>&copy; {{year}} Dário Marcelino &middot;
+         <a href="{{licenseUrl}}">MIT License</a></p>
+    </footer>
+  </div>
+</body>
+</html>
